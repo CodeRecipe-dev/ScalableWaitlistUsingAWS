@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <title>Scalable Waitlist AWS</title>
+</head>
+<body class="container text-center">
+  <h1 class="col-md-6 col-12 offset-md-3">Scalable Waitlist AWS</h1>
+  <div class="row col-md-12 mb-3">
+    <div class="card col-md-6 col-12 m-0">
+      <div class="card-body">
+        <h5 class="card-title">User - Get Estimate</h5>
+        <button id="getEstimate" type="submit" class="btn btn-dark mt-4">Get Estimate</button>
+        <p><small id="estimate"></small></p>
+      </div>
+    </div>   
+    <div class="card col-md-6 col-12 m-0">
+      <div class="card-body">
+        <h5 class="card-title">User - Reserve Table</h5>
+        <form class="col-md-8 col-12 offset-md-2">
+          <div class="form-group">
+            <label for="customerPhoneNumber">Customer Name</label>
+            <input type="text" class="form-control col-8 offset-2" id="reserveTableCustomerName" aria-describedby="emailHelp" placeholder="Joe">            
+            <label for="customerPhoneNumber">Customer Phone Number</label>
+            <input type="text" class="form-control col-8 offset-2" id="reserveTableCustomerPhoneNumber" aria-describedby="emailHelp" placeholder="+12345678912">
+          </div>
+          <button id="reserveTable" type="submit" class="btn btn-primary">Reserve Table</button>
+          <p><small id="reserveTableInfo"></small></p>
+        </form>
+      </div>
+    </div>
+  </div>   
+  <div class="card col-md-6 col-12 offset-md-3">
+    <div class="card-body">
+      <h5 class="card-title">Host</h5>
+      <div class="col-md-8 col-12 offset-md-2">
+        <table class="table table-striped">
+          First In Line
+          <tbody> 
+            <tr>
+              <td id="currentCustomerName"></td>
+              <td id="currentCustomerPhoneNumber"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button id="nextCustomer" type="submit" class="btn btn-warning">Get First In Line</button>
+        <p><small id="nextCustomerInfo" class="success"></small></p>        
+      </div>
+    </div>
+  </div> 
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script>
+    $(document).ready(function(){
+      var postCapacityRequestUrl = "https://zrbvh9rop7.execute-api.us-east-1.amazonaws.com/sample/post-capacity-request"
+      var getNextCustomerUrl = "https://zrbvh9rop7.execute-api.us-east-1.amazonaws.com/sample/get-next-customer"
+      var apiKey = "c77SY2Y2zOacldcE91Zzk5vwVeuuTbvk7ot1K9iL"
+      $.ajax({
+        type: "POST",
+        url: postCapacityRequestUrl,
+        data: {
+          "eventType": "getCurrentCustomer"
+        },
+        headers: {
+          "x-api-key": apiKey
+        },        
+        success: function(data){
+          if(data.response) {
+            $("#currentCustomerName").html(data.response.customerName)
+            $("#currentCustomerPhoneNumber").html(data.response.customerPhoneNumber)
+          }
+        }
+      })
+      $("#getEstimate").click(function(event){
+        event.preventDefault();
+        $.ajax({
+          type: "POST",
+          url: postCapacityRequestUrl,
+          data: {
+            "eventType": "getEstimate"
+          },
+          headers: {
+            "x-api-key": apiKey
+          },
+          success: function(data){
+            $("#estimate").html("Estimate: "+data.estimateMin+" Minutes")
+          }
+        })
+      });        
+      $("#reserveTable").click(function(event){
+        event.preventDefault();
+        $.ajax({
+          type: "POST",
+          url: postCapacityRequestUrl,
+          data: {
+            "customerPhoneNumber": $("#reserveTableCustomerPhoneNumber").val(),
+            "customerName": $("#reserveTableCustomerName").val(),
+            "eventType": "addNewCustomer"
+          },
+          headers: {
+            "x-api-key": apiKey
+          },          
+          success: function(data){
+            $("#reserveTableInfo").html("Added customer to waitlist and text sent")
+          }
+        })
+      });
+      $("#nextCustomer").click(function(event){
+        event.preventDefault();
+        $.ajax({
+          type: "POST",
+          url: getNextCustomerUrl,
+          headers: {
+            "x-api-key": apiKey
+          },          
+          success: function(data){
+            $("#nextCustomerInfo").html("Notified next customer to arrive.")
+          }
+        })
+      });        
+    })
+  </script>
+</body>
+</html>

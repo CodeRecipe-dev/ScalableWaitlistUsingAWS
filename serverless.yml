@@ -1,0 +1,97 @@
+service: CodeRecipeSample-YelpNoWaitUsingAWS
+provider:
+  name: aws
+  runtime: python2.7
+  region: us-east-1
+  stage: ${opt:stage}
+  apiKeys:
+    - ${opt:stage}-scalableWaitlistWithAWS
+  usagePlan:
+    quota:
+      limit: 10000
+      offset: 0
+      period: DAY
+    throttle:
+      burstLimit: 1
+      rateLimit: 1
+
+functions:
+  Notifier:
+    handler: src/handler.handle_notification
+    name: ${self:provider.stage}-Notifier
+    environment:
+      Stage: ${self:provider.stage}
+      twilio_account_sid: ${opt:twilio_account_sid}
+      twilio_auth_token: ${opt:twilio_auth_token}
+      twilio_from_number: ${opt:twilio_from_number}
+
+  CapacityMonitor:
+    handler: src/handler.handle_capacity_request
+    name: ${self:provider.stage}-CapacityMonitor
+    events:
+      - http:
+          path: post-capacity-request
+          method: POST
+          cors: true
+          integration: lambda
+          private: true
+    environment:
+      Stage: ${self:provider.stage}
+      QueueName: "#{LineupQueue.QueueName}"
+      QueueUrl: "#{LineupQueue}"
+    iamRoleStatementsName: ${self:provider.stage}-NewCustomerPutter-role
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - lambda:InvokeFunction
+        Resource: "arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:provider.stage}-Notifier"
+      - Effect: "Allow"
+        Action:
+          - sqs:*
+        Resource: "#{LineupQueue.Arn}"
+
+  NextTableFetcher:
+    handler: src/handler.handle_fetch_next_customer
+    name: ${self:provider.stage}-NextTableFetcher
+    events:
+      - http:
+          path: get-next-customer
+          method: POST
+          cors: true
+          integration: lambda
+          private: true
+    environment:
+      Stage: ${self:provider.stage}
+      QueueName: "#{LineupQueue.QueueName}"
+      QueueUrl: "#{LineupQueue}"
+    iamRoleStatementsName: ${self:provider.stage}-NextTableFetcher-role
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - lambda:InvokeFunction
+        Resource: "arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:provider.stage}-CapacityMonitor"
+      - Effect: "Allow"
+        Action:
+          - sqs:*
+        Resource: "#{LineupQueue.Arn}"
+
+resources:
+  Resources:
+    LineupQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "LineupQueue.fifo"
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        VisibilityTimeout: 3
+
+
+plugins:
+  - serverless-python-requirements
+  - serverless-pseudo-parameters
+  - serverless-iam-roles-per-function
+
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
