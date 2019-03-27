@@ -80,7 +80,7 @@ resources:
     LineupQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: "LineupQueue.fifo"
+        QueueName: "${self:provider.stage}-LineupQueue.fifo"
         FifoQueue: true
         ContentBasedDeduplication: true
         VisibilityTimeout: 3
