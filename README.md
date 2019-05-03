@@ -1,20 +1,29 @@
-## Background
+# How I build a scalable waitlist feature in AWS
+
 More info here: https://coderecipe.ai/architectures/96083665
 
-## prerequisites
-npm install serverless-python-requirements
+Many popular restaurants require you to wait in line to get seated. This simple design creates a scalable waitlist feature similar to [Yelp’s NoWait feature](https://www.yelp.nowait.com/) that allows you to get in a line without physically being there.  
 
-npm install serverless-pseudo-parameters
+I assume that each additional table takes 2 mins, and there is a global queue for any table size.
 
-npm install serverless-iam-roles-per-function
+**Prerequisites**  
+```  
+npm install serverless  
+  
+export AWS_ACCESS_KEY_ID=<your-key-here>  
+  
+export AWS_SECRET_ACCESS_KEY=<your-secret-key-here>  
+```  
 
-pip install -r requirements.txt
+**Deploy**  
+  
 
-## Deploy
+```  
+serverless create --template-url https://github.com/CodeRecipe-dev/ScalableWaitlistUsingAWS --path coderecipe-scalable-waitlist  
+  
+cd coderecipe-scalable-waitlist
+  
+npm install  
+  
 serverless deploy --stage stage --twilio_account_sid='twilio_account_sid' --twilio_auth_token='twilio_auth_token' --twilio_from_number='twilio_from_number'
-
-## get estimate API example
-sls invoke -f CapacityMonitor -d '{"body":{"eventType":"getEstimate"}}' -l --stage stage
-
-## subscribe waitlist API example
-sls invoke -f CapacityMonitor -d '{"body":{"eventType":"addNewCustomer", "customerPhoneNumber":"+123456789", "customerName":"Joe"}}' -l --stage stage
+```  
