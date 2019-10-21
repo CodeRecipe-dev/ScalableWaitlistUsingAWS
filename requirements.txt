@@ -14,7 +14,7 @@ idna==2.8
 ipaddress==1.0.22
 jmespath==0.9.3
 mock==2.0.0
-nltk==3.3
+nltk==3.4.5
 numpy==1.15.1
 pbr==5.1.2
 pox==0.2.4
